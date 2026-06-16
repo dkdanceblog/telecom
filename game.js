@@ -17,6 +17,8 @@ const assets = {
   borjomi: img('assets/recovery/borgomi.png'),
   coffee: img('assets/recovery/coffee.png'),
   memes: ['assets/memes/mem1.jpg', 'assets/memes/mem2.jpg', 'assets/memes/mem3.jpg', 'assets/memes/mem4.jpg', 'assets/memes/mem5.jpg', 'assets/memes/mem6.jpg', 'assets/memes/mem7.jpg', 'assets/memes/mem8.jpg', 'assets/memes/mem9.jpg', 'assets/memes/mem10.jpg'].map(img),
+  surpriseLeft: img('assets/surprise/left.png'),
+  surpriseRight: img('assets/surprise/right.png'),
 };
 
 
@@ -38,6 +40,7 @@ const sounds = {
   pause: new Audio('assets/audio/pause.wav'),
   burnout: new Audio('assets/audio/vigaranie.wav'),
   win: new Audio('assets/audio/win.wav'),
+  surprise: new Audio('assets/surprise/surprise.wav'),
 };
 Object.values(sounds).forEach(a => { a.preload = 'auto'; a.volume = SFX_VOLUME; });
 
@@ -78,36 +81,35 @@ function toggleSound() {
 }
 
 const WEEK_DAYS = ['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ'];
-const DAY_MS = 60000;
+const DAY_MS = 30000;
 const GAME_MS = DAY_MS * 5;
 
 const taskTexts = [
-  'собрать статистику',
-  'ответить клиенту',
-  'ответить от лица бренда',
-  'комментить от лица бренда',
-  'сделать заходы в посевы',
-  'придумать визуалы посевов',
-  'собрать идеи стикеров',
-  'сделать спец на посевы',
-  'придумать большой конкурс',
-  'снять вирусный ролик',
-  'найти свежие тренды',
-  'придумать вординги',
+  'собрать блять статистику',
+  'АААтветить клиенту',
+  'смешно блять пошутить',
+  'сделать ебучие заходы в посевы',
+  'придумать новый сука визуал',
+  'ебануть идеи стикеров',
+  'ебануть спец на посевы',
+  'разъебать большой конкурс',
+  'ёбнуть вирусный ролик',
+  'искать блядские тренды',
+  'придумать сука вординги',
   'сделать игру на ду ю ноу',
-  'найти новые мемы',
-  'собрать темы постов',
-  'подготовить копирайт',
-  'собрать референсы',
-  'адаптировать пост',
-  'согласовать идеи',
-  'написать ТЗ',
-  'найти блогеров',
-  'придумать спецпроект',
-  'собрать отчёт',
-  'проверить пост',
-  'передать задачу',
-  'внести правки',
+  'найти злоебучие мемы',
+  'ебануть темы постов',
+  'ебануть копирайт',
+  'заебашить референсы',
+  'расхуярить пост',
+  'согласовать БЛЯТЬ идеи',
+  'написать ебучее ТЗ',
+  'найти блядских блогеров',
+  'хуйнуть спецпроект',
+  'ебануть отчёт',
+  'проверить сучий пост',
+  'передать злоебучую задачу',
+  'внести мать твою правки',
 ];
 
 const messageTexts = [
@@ -135,16 +137,16 @@ const callTexts = [
 ];
 
 const asapTexts = [
-  'АСАП\nещё вчера',
-  'АСАП\nгорит дедлайн',
-  'АСАП\nвсё срочно',
-  'АСАП\nнужен апдейт',
+  'АСАП\nУ НАС ПМЭФ',
+  'АСАП\nМАЙСКИЕ',
+  'АСАП\nКОНЕЦ МЕСЯЦА',
+  'АСАП\nЗАБЫЛИ ПРО ЗАДАЧУ',
 ];
 
 const bigTaskTexts = [
-  'СРОЧНО НУЖЕН ПОСЕВ',
-  'АСАП МОЗГОВОЙ ШТУРМ',
-  'НУЖЕН БОЛЬШОЙ СПЕЦ',
+  'СРОЧНО БЛЯТЬ ПОСЕВ',
+  'АСАПНЫЙ ШТУРМ БЛЯТЬ',
+  'БЛЯТЬ БОЛЬШОЙ СПЕЦ',
 ];
 
 const telekomychReactions = [
@@ -172,10 +174,15 @@ let stress = 0, burnouts = 0, messagesCaught = 0, callsCaught = 0, asapCaught = 
 let message = '', messageUntil = 0;
 let pausedAt = 0;
 let audioMuted = false;
+let nextSurpriseAt = 0;
+let surpriseUntil = 0;
+let surpriseShownOnce = false;
+let surpriseSide = 'right';
 
 const pauseButton = { x: W - 168, y: 150, w: 64, h: 58 };
 const soundButton = { x: W - 92, y: 150, w: 64, h: 58 };
 const resumeButton = { x: W / 2 - 220, y: H / 2 - 20, w: 440, h: 120 };
+const winRestartButton = { x: W / 2 - 170, y: 24, w: 340, h: 72 };
 
 function uiHit(pos, r) {
   return pos.x >= r.x && pos.x <= r.x + r.w && pos.y >= r.y && pos.y <= r.y + r.h;
@@ -217,7 +224,11 @@ function reset() {
   player.vy = 0;
   player.jumping = false;
   nextReactionAt = randInt(16, 24);
-  say('Понедельник. Пока спокойно.', 1800);
+  surpriseShownOnce = false;
+  surpriseSide = 'right';
+  nextSurpriseAt = performance.now() + 12000;
+  surpriseUntil = 0;
+  say('Понедельник. Лень работать', 1800);
   playOfficeAudio();
 }
 
@@ -257,7 +268,7 @@ function chooseType(day, difficulty) {
     like: 0.045,
     dayoff: 0.012,
     workmsg: day >= 1 ? 0.09 + difficulty * 0.05 + (friday ? 0.08 : 0) : 0.015,
-    call: day >= 2 ? 0.055 + difficulty * 0.035 + (friday ? 0.065 : 0) : 0,
+    call: 0,
     asap: day >= 3 ? 0.035 + difficulty * 0.025 + (friday ? 0.06 : 0) : 0,
     bigTask: day >= 3 ? 0.018 + (friday ? 0.032 : 0) : 0,
   };
@@ -296,8 +307,8 @@ function spawnTask(now) {
     memeIndex: type === 'meme' ? Math.floor(Math.random() * assets.memes.length) : 0,
   });
   lastSpawn = now;
-  const fridayGap = day === 4 ? 0.56 : 1;
-  const dayHardness = [1.2, 1.0, 0.86, 0.72, 0.50][day];
+  const fridayGap = day === 4 ? 0.74 : 1;
+  const dayHardness = [1.2, 1.0, 0.86, 0.74, 0.66][day];
   spawnGap = Math.max(300, (1650 - levelTime * 0.0034) * dayHardness * fridayGap);
 }
 
@@ -307,9 +318,9 @@ function baseFallSpeed(type, day, difficulty, now) {
   if (type === 'workmsg') sp *= 1.04;
   if (type === 'call') sp *= 1.16;
   if (type === 'meme') sp *= .96;
-  if (type === 'asap') sp *= 2.1;
+  if (type === 'asap') sp *= 1.6;
   if (type === 'bigTask') sp *= 0.82;
-  if (day === 4) sp *= 1.22;
+  if (day === 4) sp *= 1.12;
   if (now < fridayUntil) sp *= 1.12;
   return sp;
 }
@@ -551,13 +562,34 @@ function drawPauseOverlay() {
 }
 
 function drawOverlay(title, text) {
-  ctx.fillStyle = 'rgba(7,5,18,.72)'; ctx.fillRect(0,0,W,H);
-  ctx.fillStyle = '#b983ff'; ctx.font = 'bold 72px monospace'; ctx.textAlign = 'center';
-  ctx.fillText(title, W/2, H/2 - 90);
-  ctx.fillStyle = '#d6ff91'; ctx.font = 'bold 34px monospace';
-  ctx.fillText(text, W/2, H/2 - 10);
-  ctx.fillStyle = '#fff'; ctx.font = '24px monospace';
-  ctx.fillText('Любая кнопка — старт. ← → или A/D — двигаться. ↑ — прыжок.', W/2, H/2 + 44);
+  ctx.fillStyle = 'rgba(7,5,18,.78)'; ctx.fillRect(0,0,W,H);
+  ctx.textAlign = 'center';
+
+  ctx.fillStyle = '#b983ff';
+  ctx.font = 'bold 58px monospace';
+  ctx.fillText('ТЕЛЕКОМЫЧ ЛОВИТ ЗАДАЧИ', W/2, H/2 - 210);
+
+  ctx.fillStyle = '#fff0a8';
+  ctx.font = 'bold 32px monospace';
+  ctx.fillText('ЦЕЛЬ:', W/2, H/2 - 145);
+
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 28px monospace';
+  ctx.fillText('дожить до пятницы и не выгореть', W/2, H/2 - 105);
+
+  ctx.font = '24px monospace';
+  ctx.fillText('📋 Лови задачи', W/2, H/2 - 42);
+  ctx.fillText('📱 Избегай сообщений', W/2, H/2 - 4);
+  ctx.fillText('🤯 Еда, лайки и мемы спасают от выгорания', W/2, H/2 + 34);
+
+  ctx.fillStyle = '#d6ff91';
+  ctx.font = 'bold 25px monospace';
+  ctx.fillText('← → движение', W/2, H/2 + 100);
+  ctx.fillText('↑ прыжок', W/2, H/2 + 136);
+
+  ctx.fillStyle = '#fff';
+  ctx.font = '22px monospace';
+  ctx.fillText('Нажми любую кнопку', W/2, H/2 + 200);
   ctx.textAlign = 'left';
 }
 
@@ -569,16 +601,19 @@ function drawWinOverlay() {
     ctx.fillRect(0,0,W,H);
   }
 
-  // Небольшая подсказка: по любому нажатию возвращаемся на стартовый экран.
-  ctx.fillStyle = 'rgba(7,5,18,.56)';
-  ctx.strokeStyle = 'rgba(255,240,168,.75)';
-  ctx.lineWidth = 2;
-  roundRect(W / 2 - 330, H - 92, 660, 54, 14); ctx.fill(); ctx.stroke();
+  // На финальном экране не реагируем на случайные нажатия клавиш.
+  // Вернуться на старт можно только кнопкой «ЗАНОВО».
+  ctx.fillStyle = 'rgba(7,5,18,.72)';
+  ctx.strokeStyle = 'rgba(255,240,168,.9)';
+  ctx.lineWidth = 3;
+  roundRect(winRestartButton.x, winRestartButton.y, winRestartButton.w, winRestartButton.h, 16); ctx.fill(); ctx.stroke();
   ctx.fillStyle = '#fff0a8';
-  ctx.font = 'bold 24px monospace';
+  ctx.font = 'bold 34px monospace';
   ctx.textAlign = 'center';
-  ctx.fillText('любая кнопка — на стартовый экран', W / 2, H - 58);
+  ctx.textBaseline = 'middle';
+  ctx.fillText('ЗАНОВО', winRestartButton.x + winRestartButton.w / 2, winRestartButton.y + winRestartButton.h / 2 + 2);
   ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
 }
 
 function checkDayChange() {
@@ -586,25 +621,61 @@ function checkDayChange() {
   if (day !== lastDay) {
     lastDay = day;
     const phrases = [
-      'Понедельник. Пока спокойно.',
-      'Вторник. Посыпались сообщения.',
-      'Среда. Начались созвоны.',
-      'Четверг. Появились ASAP-задачи.',
-      'Пятница. Всем внезапно стало срочно.',
+      'Понедельник. Лень работать',
+      'Вторник. Тяжело',
+      'Среда. Бля...',
+      'Четверг. Так, ещё немного',
+      'Пятница. ЖОПА',
     ];
     say(phrases[day], 2600);
     playSfx('nextday', 0.36);
   }
 }
 
+
+function updateSurprise(now) {
+  if (!nextSurpriseAt) nextSurpriseAt = now + 12000;
+  if (now >= nextSurpriseAt && now > surpriseUntil) {
+    surpriseSide = surpriseSide === 'left' ? 'right' : 'left';
+    surpriseUntil = now + 3000;
+    surpriseShownOnce = true;
+    playSfx('surprise', 0.48);
+    // После первого появления пасхалка вылезает примерно раз в 50 секунд.
+    nextSurpriseAt = now + 50000;
+  }
+}
+
+function drawSurprise(now) {
+  if (now >= surpriseUntil || gameState !== 'play') return;
+  const sprite = surpriseSide === 'left' ? assets.surpriseLeft : assets.surpriseRight;
+  if (!sprite || !sprite.complete) return;
+
+  const appearStart = surpriseUntil - 3000;
+  const p = Math.max(0, Math.min(1, (now - appearStart) / 420));
+  const hide = Math.max(0, Math.min(1, (surpriseUntil - now) / 420));
+  const k = Math.min(p, hide);
+
+  const w = 280;
+  const h = 280;
+  const visible = 274; // почти полностью видно, но спрайт чуть меньше
+  const x = surpriseSide === 'left' ? -w + visible * k : W - visible * k;
+  const y = H * 0.50 - h / 2;
+
+  ctx.save();
+  ctx.globalAlpha = 0.98;
+  ctx.drawImage(sprite, x, y, w, h);
+  ctx.restore();
+}
+
 function update(now) {
   if (gameState !== 'play') return;
   levelTime = now - gameStartAt;
   checkDayChange();
+  updateSurprise(now);
   if (levelTime >= GAME_MS) {
     gameState = 'win';
     tasks = [];
-    playSfx('like', 0.5);
+    playSfx('win', 0.32);
     pauseOfficeAudio();
     return;
   }
@@ -666,7 +737,7 @@ function update(now) {
     stress = 82;
     burnouts++;
     burnoutUntil = now + 3500;
-    say('ВЫГОРАНИЕ! Телекомыч ушла пить чай', 3000);
+    say('ВЫГОРАНИЕ! Телекомыч временно всё', 3000);
     playSfx('burnout', 0.55);
   }
 }
@@ -756,9 +827,14 @@ function handleCatch(t, now) {
 }
 
 function draw(now) {
+  if (gameState === 'win') {
+    drawWinOverlay();
+    return;
+  }
   drawBackground();
   tasks.filter(Boolean).forEach(drawTask);
   drawPlayer();
+  drawSurprise(now);
   drawHUD();
   if (now < coffeeBoostUntil && gameState === 'play') {
     ctx.fillStyle = '#d6ff91'; ctx.font = 'bold 26px monospace'; ctx.fillText('КОФЕ: скорость ×2', 60, 175);
@@ -786,7 +862,6 @@ function draw(now) {
   if (gameState === 'start') drawOverlay('ТЕЛЕКОМЫЧ ЛОВИТ ЗАДАЧИ', 'Продержись 5 рабочих дней');
   if (gameState === 'pause') drawPauseOverlay();
   if (gameState === 'over') drawOverlay('ИГРА ОКОНЧЕНА', 'Счёт: ' + score + ' | Поймано: ' + caught);
-  if (gameState === 'win') drawWinOverlay();
 }
 
 function loop(now) { update(now); draw(now); requestAnimationFrame(loop); }
@@ -821,15 +896,20 @@ function togglePause() {
   else if (gameState === 'pause') resumeGame();
 }
 
+
+function restartFromWinScreen() {
+  if (gameState !== 'win') return;
+  gameState = 'start';
+  tasks = [];
+  message = '';
+  messageUntil = 0;
+  pauseOfficeAudio();
+}
+
 function startGameIfNeeded() {
   if (gameState === 'win') {
-    // После финальной заставки первое нажатие возвращает на стартовый экран,
-    // а не запускает игру сразу заново.
-    gameState = 'start';
-    tasks = [];
-    message = '';
-    messageUntil = 0;
-    pauseOfficeAudio();
+    // Финальную заставку нельзя случайно скипнуть клавиатурой или тапом вне кнопки.
+    // Возврат на старт — только через кнопку «ЗАНОВО».
     return true;
   }
   if (gameState === 'start' || gameState === 'over') {
@@ -880,6 +960,11 @@ document.getElementById('pauseBtn').addEventListener('pointerdown', (e) => {
 
 canvas.addEventListener('pointerdown', (e) => {
   const pos = pointerToCanvas(e);
+  if (gameState === 'win') {
+    e.preventDefault();
+    if (uiHit(pos, winRestartButton)) restartFromWinScreen();
+    return;
+  }
   if (uiHit(pos, soundButton)) {
     e.preventDefault();
     toggleSound();
