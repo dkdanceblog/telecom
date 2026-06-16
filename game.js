@@ -8,6 +8,7 @@ const H = canvas.height;
 const img = (src) => { const i = new Image(); i.src = src; return i; };
 const assets = {
   bg: img('assets/bg/background.png'),
+  final: img('assets/bg/final.png'),
   idle: img('assets/player/idle.png'),
   left: img('assets/player/left.png'),
   right: img('assets/player/right.png'),
@@ -36,6 +37,7 @@ const sounds = {
   nextday: new Audio('assets/audio/nextday.wav'),
   pause: new Audio('assets/audio/pause.wav'),
   burnout: new Audio('assets/audio/vigaranie.wav'),
+  win: new Audio('assets/audio/win.wav'),
 };
 Object.values(sounds).forEach(a => { a.preload = 'auto'; a.volume = SFX_VOLUME; });
 
@@ -560,17 +562,22 @@ function drawOverlay(title, text) {
 }
 
 function drawWinOverlay() {
-  ctx.fillStyle = 'rgba(7,5,18,.76)'; ctx.fillRect(0,0,W,H);
-  ctx.fillStyle = '#baff6f'; ctx.font = 'bold 70px monospace'; ctx.textAlign = 'center';
-  ctx.fillText('ВЫ ПЕРЕЖИЛИ НЕДЕЛЮ!', W/2, H/2 - 130);
-  ctx.fillStyle = '#ffffff'; ctx.font = 'bold 30px monospace';
-  ctx.fillText('Задач выполнено: ' + caught, W/2, H/2 - 50);
-  ctx.fillText('Стресса от сообщений: ' + messagesCaught, W/2, H/2 - 5);
-  ctx.fillText('Созвонов пережито: ' + callsCaught, W/2, H/2 + 40);
-  ctx.fillText('ASAP поймано: ' + asapCaught, W/2, H/2 + 85);
-  ctx.fillText('Выгораний: ' + burnouts, W/2, H/2 + 130);
-  ctx.fillStyle = '#fff0a8'; ctx.font = 'bold 28px monospace';
-  ctx.fillText('Любая кнопка — в понедельник снова', W/2, H/2 + 190);
+  if (assets.final && assets.final.complete) {
+    ctx.drawImage(assets.final, 0, 0, W, H);
+  } else {
+    ctx.fillStyle = 'rgba(7,5,18,.92)';
+    ctx.fillRect(0,0,W,H);
+  }
+
+  // Небольшая подсказка: по любому нажатию возвращаемся на стартовый экран.
+  ctx.fillStyle = 'rgba(7,5,18,.56)';
+  ctx.strokeStyle = 'rgba(255,240,168,.75)';
+  ctx.lineWidth = 2;
+  roundRect(W / 2 - 330, H - 92, 660, 54, 14); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#fff0a8';
+  ctx.font = 'bold 24px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('любая кнопка — на стартовый экран', W / 2, H - 58);
   ctx.textAlign = 'left';
 }
 
@@ -815,7 +822,17 @@ function togglePause() {
 }
 
 function startGameIfNeeded() {
-  if (gameState === 'start' || gameState === 'over' || gameState === 'win') {
+  if (gameState === 'win') {
+    // После финальной заставки первое нажатие возвращает на стартовый экран,
+    // а не запускает игру сразу заново.
+    gameState = 'start';
+    tasks = [];
+    message = '';
+    messageUntil = 0;
+    pauseOfficeAudio();
+    return true;
+  }
+  if (gameState === 'start' || gameState === 'over') {
     reset();
     return true;
   }
