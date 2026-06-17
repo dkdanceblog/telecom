@@ -85,31 +85,30 @@ const DAY_MS = 30000;
 const GAME_MS = DAY_MS * 5;
 
 const taskTexts = [
-  'собрать блять статистику',
+  'БЛЯ, собрать статистику',
   'АААтветить клиенту',
-  'смешно блять пошутить',
-  'сделать ебучие заходы в посевы',
-  'придумать новый сука визуал',
+  'охуенно пошутить',
+  'сделать охуевшие заходы в посевы',
+  'придумать ебейший визуал',
   'ебануть идеи стикеров',
-  'ебануть спец на посевы',
+  'захуячить спец на посевы',
   'разъебать большой конкурс',
   'ёбнуть вирусный ролик',
-  'искать блядские тренды',
-  'придумать сука вординги',
+  'искать пиздатые тренды',
+  'придумать разъёбный вординг',
   'сделать игру на ду ю ноу',
-  'найти злоебучие мемы',
+  'найти ебические мемы',
   'ебануть темы постов',
   'ебануть копирайт',
   'заебашить референсы',
-  'расхуярить пост',
-  'согласовать БЛЯТЬ идеи',
-  'написать ебучее ТЗ',
-  'найти блядских блогеров',
-  'хуйнуть спецпроект',
+  'заебенить крутой пост',
+  'согласовать охуенные идеи',
+  'написать невъебенное ТЗ',
+  'найти пиздатейших блогеров',
+  'сделать разъёбный спец',
   'ебануть отчёт',
-  'проверить сучий пост',
-  'передать злоебучую задачу',
-  'внести мать твою правки',
+  'охуенно проверить пост',
+  'внести пиздатые правки',
 ];
 
 const messageTexts = [
@@ -137,7 +136,7 @@ const callTexts = [
 ];
 
 const asapTexts = [
-  'АСАП\nУ НАС ПМЭФ',
+  'АСАП\nУ НАС ЗАВАЛ',
   'АСАП\nМАЙСКИЕ',
   'АСАП\nКОНЕЦ МЕСЯЦА',
   'АСАП\nЗАБЫЛИ ПРО ЗАДАЧУ',
@@ -260,17 +259,17 @@ function chooseType(day, difficulty) {
   const r = Math.random();
   const friday = day === 4;
   const chances = {
-    coffee: 0.052,
+    coffee: friday ? 0.16 : 0.052,
     croissant: 0.045,
     khinkali: 0.022,
     borjomi: 0.022,
     meme: 0.09,
     like: 0.045,
     dayoff: 0.012,
-    workmsg: day >= 1 ? 0.09 + difficulty * 0.05 + (friday ? 0.08 : 0) : 0.015,
+    workmsg: day >= 1 ? 0.08 + difficulty * 0.035 + (friday ? 0.025 : 0) : 0.012,
     call: 0,
-    asap: day >= 3 ? 0.035 + difficulty * 0.025 + (friday ? 0.06 : 0) : 0,
-    bigTask: day >= 3 ? 0.018 + (friday ? 0.032 : 0) : 0,
+    asap: day >= 3 ? 0.028 + difficulty * 0.018 + (friday ? 0.018 : 0) : 0,
+    bigTask: day >= 3 ? 0.014 + (friday ? 0.012 : 0) : 0,
   };
   let cursor = 0;
   if (r < (cursor += chances.coffee)) return 'coffee';
@@ -307,20 +306,20 @@ function spawnTask(now) {
     memeIndex: type === 'meme' ? Math.floor(Math.random() * assets.memes.length) : 0,
   });
   lastSpawn = now;
-  const fridayGap = day === 4 ? 0.74 : 1;
-  const dayHardness = [1.2, 1.0, 0.86, 0.74, 0.66][day];
-  spawnGap = Math.max(300, (1650 - levelTime * 0.0034) * dayHardness * fridayGap);
+  const fridayGap = day === 4 ? 1.05 : 1;
+  const dayHardness = [1.32, 1.15, 1.0, 0.88, 0.98][day];
+  spawnGap = Math.max(420, (1750 - levelTime * 0.0028) * dayHardness * fridayGap);
 }
 
 function baseFallSpeed(type, day, difficulty, now) {
-  let sp = 2.05 + Math.random() * .95 + day * .35 + difficulty * 1.6;
+  let sp = 1.85 + Math.random() * .75 + day * .28 + difficulty * 1.25;
   if (type === 'coffee' || type === 'croissant' || type === 'khinkali' || type === 'borjomi' || type === 'like' || type === 'dayoff') sp *= .9;
   if (type === 'workmsg') sp *= 1.04;
   if (type === 'call') sp *= 1.16;
   if (type === 'meme') sp *= .96;
   if (type === 'asap') sp *= 1.6;
   if (type === 'bigTask') sp *= 0.82;
-  if (day === 4) sp *= 1.12;
+  if (day === 4) sp *= 1.05;
   if (now < fridayUntil) sp *= 1.12;
   return sp;
 }
@@ -722,7 +721,7 @@ function update(now) {
     if (t.y > H + 90) {
       if (t.type === 'task' || t.type === 'asap' || t.type === 'bigTask') {
         lives--;
-        stress = Math.min(100, stress + (t.type === 'asap' ? 18 : t.type === 'bigTask' ? 24 : 12));
+        stress = Math.min(100, stress + (t.type === 'asap' ? 14 : t.type === 'bigTask' ? 18 : 9));
       }
       tasks.splice(i,1);
       if (lives <= 0) {
@@ -790,7 +789,7 @@ function handleCatch(t, now) {
     say('ДЭЙ ОФФ! Все задачи исчезли', 2400);
     playSfx('dayoff', 0.48);
   } else if (t.type === 'workmsg') {
-    stress = Math.min(100, stress + 22);
+    stress = Math.min(100, stress + 18);
     score = Math.max(0, score - 100);
     messagesCaught++;
     say('Словила стресс от сообщения');
@@ -806,21 +805,21 @@ function handleCatch(t, now) {
     score += getDayIndex() === 4 ? 1200 : 800;
     caught++;
     asapCaught++;
-    stress = Math.min(100, stress + 13);
+    stress = Math.min(100, stress + 11);
     say('ASAP поймана! +очки, но стресс');
     playSfx('message', 0.50);
     maybeTelekomychReaction();
   } else if (t.type === 'bigTask') {
     score += getDayIndex() === 4 ? 1800 : 1300;
     caught++;
-    stress = Math.min(100, stress + 15);
+    stress = Math.min(100, stress + 12);
     say('Большая задача закрыта!');
     playSfx('task', 0.48);
     maybeTelekomychReaction();
   } else {
     score += getDayIndex() === 4 ? 180 : 100;
     caught++;
-    stress = Math.min(100, stress + 5.5);
+    stress = Math.min(100, stress + 4.6);
     playSfx('task', 0.36);
     maybeTelekomychReaction();
   }
