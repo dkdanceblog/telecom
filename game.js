@@ -2,6 +2,12 @@ const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 ctx.imageSmoothingEnabled = false;
 
+// Mobile polish: prevent accidental text selection / context menu on control symbols.
+document.addEventListener('contextmenu', (e) => e.preventDefault());
+document.addEventListener('selectstart', (e) => e.preventDefault());
+document.addEventListener('dragstart', (e) => e.preventDefault());
+
+
 const W = canvas.width;
 const H = canvas.height;
 

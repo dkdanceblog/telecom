@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Телекомыч ловит задачи</title>
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -16,6 +16,13 @@
       <button id="rightBtn">→</button>
     </div>
   </main>
+  <div class="orientation-lock" aria-hidden="true">
+    <div class="orientation-card">
+      <div class="orientation-icon">📱</div>
+      <div class="orientation-title">Поверните телефон</div>
+      <div class="orientation-text">Телекомыч лучше ловит задачи в вертикальном режиме</div>
+    </div>
+  </div>
   <script src="game.js"></script>
 </body>
 </html>
