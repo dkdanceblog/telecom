@@ -12,9 +12,9 @@ button {
   cursor: pointer;
 }
 
-html, body { margin: 0; min-height: 100%; background: #090716; color: #fff; font-family: system-ui, -apple-system, Segoe UI, sans-serif; overflow: hidden; }
-.wrap { width: 100vw; height: 100vh; display: grid; place-items: center; }
-canvas { width: min(100vw, calc(100vh * 1.5)); height: min(100vh, calc(100vw / 1.5)); image-rendering: pixelated; image-rendering: crisp-edges; border: 2px solid #352750; box-shadow: 0 0 40px rgba(90, 255, 80, .12); background: #100b1f; }
+html, body { margin: 0; width: 100%; min-height: 100%; background: #090716; color: #fff; font-family: system-ui, -apple-system, Segoe UI, sans-serif; overflow: hidden; overscroll-behavior: none; }
+.wrap { width: 100vw; height: 100dvh; display: grid; place-items: center; }
+canvas { width: min(100vw, calc(100dvh * 1.5)); height: min(100dvh, calc(100vw / 1.5)); image-rendering: pixelated; image-rendering: crisp-edges; border: 2px solid #352750; box-shadow: 0 0 40px rgba(90, 255, 80, .12); background: #100b1f; }
 .mobile-controls { position: fixed; left: 50%; bottom: max(14px, env(safe-area-inset-bottom)); transform: translateX(-50%); display: flex; gap: 10px; opacity: .92; z-index: 20; }
 .mobile-controls button { min-width: 72px; min-height: 54px; border: 2px solid #684d8d; border-radius: 12px; background: linear-gradient(#5d3c8c, #30204c); color: white; font-weight: 800; font-size: 22px; touch-action: manipulation; }
 #startBtn { font-size: 13px; min-width: 128px; color: #b8ff7a; }
@@ -50,6 +50,20 @@ canvas { width: min(100vw, calc(100vh * 1.5)); height: min(100vh, calc(100vw / 1
 .orientation-title { color: #fff0a8; font-size: 30px; font-weight: 900; margin-bottom: 10px; }
 .orientation-text { color: #d6ff91; font-size: 18px; font-weight: 700; line-height: 1.35; }
 
-@media (pointer: coarse) and (orientation: landscape) {
+@media (pointer: coarse) and (orientation: portrait) {
   .orientation-lock { display: grid; }
+}
+
+/* На телефоне игра рассчитана на горизонтальную ориентацию.
+   В landscape оставляем место для кнопок управления снизу. */
+@media (pointer: coarse) and (orientation: landscape) {
+  .wrap { height: calc(100dvh - max(82px, env(safe-area-inset-bottom))); padding-top: max(4px, env(safe-area-inset-top)); }
+  canvas {
+    width: min(100vw, calc((100dvh - max(86px, env(safe-area-inset-bottom))) * 1.5));
+    height: min(calc(100dvh - max(86px, env(safe-area-inset-bottom))), calc(100vw / 1.5));
+  }
+  .mobile-controls { bottom: max(8px, env(safe-area-inset-bottom)); }
+  .mobile-controls button { min-height: 48px; min-width: 70px; font-size: 20px; }
+  #startBtn { min-width: 122px; font-size: 12px; }
+  #pauseBtn { min-width: 78px; font-size: 18px; }
 }
